@@ -22,6 +22,13 @@
         </a>
       </li>
 
+      <li class="nav-item">
+        <a class="nav-link {{ !str_contains($currentUrl, 'blogs') ? 'collapsed' : '' }}" href="{{ route('blogs.index') }}">
+          <i class="bi bi-card-text"></i>
+          <span>Blogs</span>
+        </a>
+      </li>
+
     </ul>
 
   </aside>

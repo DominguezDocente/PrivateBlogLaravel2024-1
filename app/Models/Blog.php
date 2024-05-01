@@ -5,10 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Section extends Model
+class Blog extends Model
 {
-    public function blogs() {
+    public function section() {
 
-        return $this->hasMany(Blog::class);
+        return $this->belongsTo(Section::class);
     }
 }
