@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\RolePermission;
+use App\Models\RoleSection;
+use App\Models\Section;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
@@ -39,7 +41,11 @@ class RolesController extends Controller
         $modules = Permission::all()
                              ->groupBy('module');
 
-        return view('roles.create', ['modules' => $modules]);
+        $sectionGroups = Section::all()
+                                ->chunk(5);
+
+        return view('roles.create', ['modules' => $modules,
+                                     'sectionGroups' => $sectionGroups]);
     }
 
     public function edit($id) {
@@ -71,9 +77,30 @@ class RolesController extends Controller
 
         });
 
-        $modules = $permissions->groupBy('module');
+        $sections = Section::all();
 
-        return view('roles.edit', ['role' => $role, 'modules' => $modules]);
+        $sections = $sections->map(function($item) use($id) {
+
+            $item->selected = false;
+
+            $roleSection = RoleSection::where('section_id', '=', $item->id)
+                                      ->where('role_id', '=', $id)
+                                      ->first();
+
+            if (!empty($roleSection)) {
+
+                $item->selected = true;
+            }
+
+            return $item;
+        });
+
+        $modules = $permissions->groupBy('module');
+        $sectionGroups = $sections->chunk(5);
+
+        return view('roles.edit', ['role' => $role,
+                                   'modules' => $modules,
+                                   'sectionGroups' => $sectionGroups]);
     }
 
     public function delete($id) {
@@ -107,13 +134,16 @@ class RolesController extends Controller
         Validator::make($request->all(), [
 
             'name' => 'required|max:64',
-            'permissions' => 'required|json'
+            'permissions' => 'required|json',
+            'sections' => 'required|json',
         ],
         [
             'name.required' => 'El nombre es requerido.',
             'name.max' => 'El nombre no puede ser mayor a :max carácteres.',
             'permissions.required' => 'debe seleccionar al menos 1 permiso.',
             'permissions.json' => 'el campo permissions tiene el formato incorrecto.',
+            'sections.required' => 'debe seleccionar al menos una sección.',
+            'sections.json' => 'el campo sections tiene el formato incorrecto.',
         ])->validate();
 
         try {
@@ -125,7 +155,7 @@ class RolesController extends Controller
                 $role->name = $request->name;
                 $role->save();
 
-                // Crear la relación entreroles y permisos
+                // Crear la relación entre roles y permisos
                 $permissions = json_decode($request->permissions);
 
                 foreach($permissions as $permission) {
@@ -134,6 +164,17 @@ class RolesController extends Controller
                     $rolePermission->role_id = $role->id;
                     $rolePermission->permission_id = $permission;
                     $rolePermission->save();
+                }
+
+                // Crear la relación entre roles y secciones
+                $sections = json_decode($request->sections);
+
+                foreach($sections as $section) {
+
+                    $roleSection = new RoleSection();
+                    $roleSection->role_id = $role->id;
+                    $roleSection->section_id = $section;
+                    $roleSection->save();
                 }
             });
 
@@ -155,7 +196,8 @@ class RolesController extends Controller
 
             'role_id' => 'required|exists:roles,id',
             'name' => 'required|max:64',
-            'permissions' => 'required|json'
+            'permissions' => 'required|json',
+            'sections' => 'required|json'
         ],
         [
             'role_id.required' => 'El id del rol es requerido.',
@@ -164,6 +206,8 @@ class RolesController extends Controller
             'name.max' => 'El nombre no puede ser mayor a :max carácteres.',
             'permissions.required' => 'debe seleccionar al menos 1 permiso.',
             'permissions.json' => 'el campo permissions tiene el formato incorrecto.',
+            'sections.required' => 'debe seleccionar al menos una sección.',
+            'sections.json' => 'el campo sections tiene el formato incorrecto.',
         ])->validate();
 
         try {
@@ -179,7 +223,7 @@ class RolesController extends Controller
                 RolePermission::where('role_id', '=', $role->id)
                               ->delete();
 
-                // Crear la relación entreroles y permisos
+                // Crear la relación entre roles y permisos
                 $permissions = json_decode($request->permissions);
 
                 foreach($permissions as $permission) {
@@ -188,6 +232,21 @@ class RolesController extends Controller
                     $rolePermission->role_id = $role->id;
                     $rolePermission->permission_id = $permission;
                     $rolePermission->save();
+                }
+
+                // Eliminación de secciones viejos
+                RoleSection::where('role_id', '=', $role->id)
+                           ->delete();
+
+                // Crear la relación entre roles y secciones
+                $sections = json_decode($request->sections);
+
+                foreach($sections as $section) {
+
+                    $roleSection = new RoleSection();
+                    $roleSection->role_id = $role->id;
+                    $roleSection->section_id = $section;
+                    $roleSection->save();
                 }
             });
 
