@@ -42,6 +42,15 @@
             </li>
         @endif
 
+        @if(\App\Helpers\RoleHelper::isAuthorized('Usuarios.showUsers'))
+            <li class="nav-item">
+                <a class="nav-link {{ !str_contains($currentUrl, 'users') ? 'collapsed' : '' }}" href="{{ route('users.index') }}">
+                <i class="bi bi-file-person"></i>
+                <span>Usuarios</span>
+                </a>
+            </li>
+        @endif
+
     </ul>
 
   </aside>

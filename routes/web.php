@@ -17,6 +17,15 @@ Route::get('/', [HomeController::class, 'index'])
      ->name('home.index')
      ->middleware(AuthorizedMiddleware::class);
 
+Route::get('/home/section/{id}', [HomeController::class, 'section'])
+     ->name('home.section')
+     ->middleware(AuthorizedMiddleware::class);
+
+Route::get('/home/blog/{id}', [HomeController::class, 'blog'])
+     ->name('home.blog')
+     ->middleware(AuthorizedMiddleware::class);
+
 include('web/sections.php');
 include('web/blogs.php');
 include('web/roles.php');
+include('web/users.php');
