@@ -20,3 +20,4 @@ Route::get('/', [HomeController::class, 'index'])
 include('web/sections.php');
 include('web/blogs.php');
 include('web/roles.php');
+include('web/users.php');
